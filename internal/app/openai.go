@@ -37,6 +37,55 @@ type ImageOutput struct {
 	B64JSON string `json:"b64_json,omitempty"`
 }
 
+type completionProbeRequest struct {
+	Model string `json:"model"`
+}
+
+func (s *Server) chatCompletions(c *gin.Context) {
+	var req completionProbeRequest
+	_ = c.ShouldBindJSON(&req)
+	if _, err := s.resolutionFromModel(req.Model); err != nil {
+		openAIError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"id":      "chatcmpl-banana-probe",
+		"object":  "chat.completion",
+		"created": time.Now().Unix(),
+		"model":   req.Model,
+		"choices": []gin.H{{
+			"index": 0,
+			"message": gin.H{
+				"role":    "assistant",
+				"content": "banana pro image wrapper is reachable",
+			},
+			"finish_reason": "stop",
+		}},
+		"usage": gin.H{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+	})
+}
+
+func (s *Server) completions(c *gin.Context) {
+	var req completionProbeRequest
+	_ = c.ShouldBindJSON(&req)
+	if _, err := s.resolutionFromModel(req.Model); err != nil {
+		openAIError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"id":      "cmpl-banana-probe",
+		"object":  "text_completion",
+		"created": time.Now().Unix(),
+		"model":   req.Model,
+		"choices": []gin.H{{
+			"index":         0,
+			"text":          "banana pro image wrapper is reachable",
+			"finish_reason": "stop",
+		}},
+		"usage": gin.H{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+	})
+}
+
 func (s *Server) imageGeneration(c *gin.Context) {
 	var req ImageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

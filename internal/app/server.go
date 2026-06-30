@@ -33,6 +33,8 @@ func (s *Server) Router() http.Handler {
 	router.Use(cors())
 	router.GET("/health", s.health)
 	router.GET("/v1/models", s.openAIAuth(), s.models)
+	router.POST("/v1/chat/completions", s.openAIAuth(), s.chatCompletions)
+	router.POST("/v1/completions", s.openAIAuth(), s.completions)
 	router.POST("/v1/images/generations", s.openAIAuth(), s.imageGeneration)
 	router.POST("/v1/images/edits", s.openAIAuth(), s.imageEdit)
 	router.POST("/api/admin/login", s.adminLogin)
