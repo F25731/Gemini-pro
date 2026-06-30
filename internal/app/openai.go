@@ -278,16 +278,18 @@ func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult,
 	outputs := make([]ImageOutput, 0, len(results))
 	wantB64 := strings.EqualFold(format, "b64_json") || s.cfg.ReturnB64JSON
 	for _, result := range results {
-		if result.URL == "" {
+		url := result.ImageURLValue()
+		if url == "" {
 			continue
 		}
 		if !wantB64 {
-			outputs = append(outputs, ImageOutput{URL: result.URL})
+			outputs = append(outputs, ImageOutput{URL: url})
 			continue
 		}
-		b64, err := downloadB64(ctx, s.client.httpClient, result.URL)
+		b64, err := downloadB64(ctx, s.client.httpClient, url)
 		if err != nil {
-			return nil, err
+			outputs = append(outputs, ImageOutput{URL: url})
+			continue
 		}
 		outputs = append(outputs, ImageOutput{B64JSON: b64})
 	}
@@ -295,6 +297,15 @@ func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult,
 		return nil, errors.New("banana returned no image urls")
 	}
 	return outputs, nil
+}
+
+func (result BananaResult) ImageURLValue() string {
+	for _, value := range []string{result.URL, result.ImageURL, result.ImageURLAlt, result.DownloadURL} {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }
 
 func normalizeAspectRatio(size string) string {

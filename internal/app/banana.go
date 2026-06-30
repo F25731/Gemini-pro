@@ -40,9 +40,12 @@ type BananaTask struct {
 }
 
 type BananaResult struct {
-	URL        string `json:"url"`
-	OutputType string `json:"outputType"`
-	Text       string `json:"text"`
+	URL         string `json:"url"`
+	ImageURL    string `json:"imageUrl"`
+	ImageURLAlt string `json:"image_url"`
+	DownloadURL string `json:"download_url"`
+	OutputType  string `json:"outputType"`
+	Text        string `json:"text"`
 }
 
 func NewBananaClient(cfg Config, runtime *RuntimeStore) *BananaClient {
