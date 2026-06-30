@@ -49,6 +49,8 @@ Admin UI:
 http://SERVER_IP:3000/admin
 ```
 
+You can set or replace the GetToken upstream API key in the admin UI. It is saved to `./data/config.json` and takes effect immediately.
+
 ## Important Env Vars
 
 ```env

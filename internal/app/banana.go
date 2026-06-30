@@ -15,6 +15,7 @@ import (
 
 type BananaClient struct {
 	cfg        Config
+	runtime    *RuntimeStore
 	httpClient *http.Client
 }
 
@@ -44,8 +45,8 @@ type BananaResult struct {
 	Text       string `json:"text"`
 }
 
-func NewBananaClient(cfg Config) *BananaClient {
-	return &BananaClient{cfg: cfg, httpClient: &http.Client{Timeout: cfg.BananaHTTPTimeout}}
+func NewBananaClient(cfg Config, runtime *RuntimeStore) *BananaClient {
+	return &BananaClient{cfg: cfg, runtime: runtime, httpClient: &http.Client{Timeout: cfg.BananaHTTPTimeout}}
 }
 
 func (c *BananaClient) SubmitTextToImage(ctx context.Context, req BananaSubmitRequest) (BananaTask, error) {
@@ -104,7 +105,7 @@ func (c *BananaClient) Upload(ctx context.Context, fileName string, body io.Read
 	if err != nil {
 		return "", err
 	}
-	request.Header.Set("Authorization", "Bearer "+c.cfg.BananaAPIKey)
+	request.Header.Set("Authorization", "Bearer "+c.bananaAPIKey())
 	request.Header.Set("Content-Type", writer.FormDataContentType())
 	response, err := c.httpClient.Do(request)
 	if err != nil {
@@ -149,7 +150,7 @@ func (c *BananaClient) postJSON(ctx context.Context, path string, input any, out
 	if err != nil {
 		return err
 	}
-	request.Header.Set("Authorization", "Bearer "+c.cfg.BananaAPIKey)
+	request.Header.Set("Authorization", "Bearer "+c.bananaAPIKey())
 	request.Header.Set("Content-Type", "application/json")
 	response, err := c.httpClient.Do(request)
 	if err != nil {
@@ -164,6 +165,13 @@ func (c *BananaClient) postJSON(ctx context.Context, path string, input any, out
 		return err
 	}
 	return nil
+}
+
+func (c *BananaClient) bananaAPIKey() string {
+	if c.runtime == nil {
+		return c.cfg.BananaAPIKey
+	}
+	return c.runtime.Get().BananaAPIKey
 }
 
 func bananaError(task BananaTask) string {

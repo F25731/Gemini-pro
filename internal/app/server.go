@@ -14,14 +14,16 @@ import (
 var webFS embed.FS
 
 type Server struct {
-	cfg    Config
-	client *BananaClient
-	pool   *WorkerPool
+	cfg     Config
+	runtime *RuntimeStore
+	client  *BananaClient
+	pool    *WorkerPool
 }
 
 func NewServer(cfg Config) *Server {
-	client := NewBananaClient(cfg)
-	return &Server{cfg: cfg, client: client, pool: NewWorkerPool(cfg.MaxWorkers, cfg.MaxQueue)}
+	runtime := NewRuntimeStore(cfg.RuntimeConfigPath, RuntimeConfig{BananaAPIKey: cfg.BananaAPIKey})
+	client := NewBananaClient(cfg, runtime)
+	return &Server{cfg: cfg, runtime: runtime, client: client, pool: NewWorkerPool(cfg.MaxWorkers, cfg.MaxQueue)}
 }
 
 func (s *Server) Router() http.Handler {
@@ -37,6 +39,7 @@ func (s *Server) Router() http.Handler {
 	admin := router.Group("/api/admin", s.adminAuth())
 	admin.GET("/status", s.adminStatus)
 	admin.GET("/config", s.adminConfig)
+	admin.POST("/config", s.adminSaveConfig)
 
 	s.mountAdmin(router)
 	return router
@@ -83,9 +86,12 @@ func (s *Server) adminStatus(c *gin.Context) {
 }
 
 func (s *Server) adminConfig(c *gin.Context) {
+	runtime := s.runtime.Get()
 	c.JSON(http.StatusOK, gin.H{
 		"publicBaseUrl":     s.cfg.PublicBaseURL,
 		"bananaBaseUrl":     s.cfg.BananaBaseURL,
+		"bananaApiKeySet":   runtime.BananaAPIKey != "",
+		"bananaApiKeyHint":  maskKey(runtime.BananaAPIKey),
 		"modelPrefix":       s.cfg.ModelPrefix,
 		"maxWorkers":        s.cfg.MaxWorkers,
 		"maxQueue":          s.cfg.MaxQueue,
@@ -94,6 +100,36 @@ func (s *Server) adminConfig(c *gin.Context) {
 		"returnB64JSON":     s.cfg.ReturnB64JSON,
 		"models":            s.cfg.Models(),
 	})
+}
+
+func (s *Server) adminSaveConfig(c *gin.Context) {
+	var input struct {
+		BananaAPIKey string `json:"bananaApiKey"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		return
+	}
+	if strings.TrimSpace(input.BananaAPIKey) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "banana api key is required"})
+		return
+	}
+	if err := s.runtime.Save(RuntimeConfig{BananaAPIKey: input.BananaAPIKey}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "bananaApiKeyHint": maskKey(input.BananaAPIKey)})
+}
+
+func maskKey(key string) string {
+	key = strings.TrimSpace(key)
+	if len(key) <= 12 {
+		if key == "" {
+			return ""
+		}
+		return "set"
+	}
+	return key[:8] + "..." + key[len(key)-4:]
 }
 
 func cors() gin.HandlerFunc {

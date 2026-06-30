@@ -148,6 +148,12 @@ dt {
   gap: 8px;
 }
 
+.save-key {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 code {
   border-radius: 5px;
   padding: 3px 6px;

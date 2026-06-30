@@ -16,6 +16,7 @@ type Config struct {
 	AdminPassword     string
 	BananaBaseURL     string
 	BananaAPIKey      string
+	RuntimeConfigPath string
 	ModelPrefix       string
 	MaxWorkers        int
 	MaxQueue          int
@@ -35,6 +36,7 @@ func LoadConfig() Config {
 		AdminPassword:     env("ADMIN_PASSWORD", ""),
 		BananaBaseURL:     strings.TrimRight(env("BANANA_API_BASE", "https://nb.gettoken.cn/openapi"), "/"),
 		BananaAPIKey:      env("BANANA_API_KEY", ""),
+		RuntimeConfigPath: env("RUNTIME_CONFIG_PATH", "data/config.json"),
 		ModelPrefix:       env("MODEL_PREFIX", "banana-pro"),
 		MaxWorkers:        envInt("MAX_WORKERS", 512),
 		MaxQueue:          envInt("MAX_QUEUE", 20000),

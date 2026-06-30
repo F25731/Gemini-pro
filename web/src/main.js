@@ -7,6 +7,7 @@ const App = {
       token: localStorage.getItem("banana-admin-token") || "",
       username: "",
       password: "",
+      bananaApiKey: "",
       status: null,
       config: null,
       error: "",
@@ -45,6 +46,20 @@ const App = {
         this.refresh();
       } catch (error) {
         this.error = error.message || "登录失败";
+      }
+    },
+    async saveBananaKey() {
+      try {
+        const response = await fetch("/api/admin/config", {
+          method: "POST",
+          headers: { ...this.authHeaders, "Content-Type": "application/json" },
+          body: JSON.stringify({ bananaApiKey: this.bananaApiKey }),
+        });
+        await readJson(response);
+        this.bananaApiKey = "";
+        await this.refresh();
+      } catch (error) {
+        this.error = error.message || "保存失败";
       }
     },
     async refresh() {
@@ -117,6 +132,18 @@ const App = {
             <dt>能力</dt>
             <dd>/images/generations 文生图，/images/edits 图生图</dd>
           </dl>
+        </div>
+
+        <div class="panel">
+          <h2>上游 GetToken</h2>
+          <dl>
+            <dt>API Key 状态</dt>
+            <dd>{{ config.bananaApiKeySet ? config.bananaApiKeyHint : "未配置" }}</dd>
+          </dl>
+          <div class="save-key">
+            <input v-model="bananaApiKey" type="password" placeholder="粘贴 GetToken 企业级 API Key" @keyup.enter="saveBananaKey" />
+            <button @click="saveBananaKey">保存上游 Key</button>
+          </div>
         </div>
 
         <div class="panel">
