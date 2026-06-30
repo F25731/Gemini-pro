@@ -1,6 +1,7 @@
 package app
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -24,7 +25,11 @@ func (s *Server) openAIAuth() gin.HandlerFunc {
 
 func (s *Server) adminAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if s.cfg.AdminToken == "" {
+		if s.cfg.AdminToken == "" && (s.cfg.AdminUsername == "" || s.cfg.AdminPassword == "") {
+			c.Next()
+			return
+		}
+		if cookie, err := c.Cookie("banana_admin_session"); err == nil && cookie != "" && s.cfg.AdminToken != "" && constantEqual(cookie, s.cfg.AdminToken) {
 			c.Next()
 			return
 		}
@@ -32,7 +37,7 @@ func (s *Server) adminAuth() gin.HandlerFunc {
 		if token == "" {
 			token = strings.TrimSpace(c.Query("token"))
 		}
-		if token != s.cfg.AdminToken {
+		if s.cfg.AdminToken == "" || !constantEqual(token, s.cfg.AdminToken) {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid admin token"})
 			c.Abort()
 			return
@@ -41,10 +46,39 @@ func (s *Server) adminAuth() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) adminLogin(c *gin.Context) {
+	var input struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		return
+	}
+	if s.cfg.AdminUsername == "" || s.cfg.AdminPassword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "admin username/password not configured"})
+		return
+	}
+	if !constantEqual(input.Username, s.cfg.AdminUsername) || !constantEqual(input.Password, s.cfg.AdminPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid username or password"})
+		return
+	}
+	token := s.cfg.AdminToken
+	if token == "" {
+		token = s.cfg.AdminUsername + ":" + s.cfg.AdminPassword
+	}
+	c.SetCookie("banana_admin_session", token, 86400*30, "/", "", false, true)
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 func bearer(header string) string {
 	value := strings.TrimSpace(header)
 	if strings.HasPrefix(strings.ToLower(value), "bearer ") {
 		return strings.TrimSpace(value[7:])
 	}
 	return value
+}
+
+func constantEqual(a string, b string) bool {
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }

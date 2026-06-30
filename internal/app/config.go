@@ -12,6 +12,8 @@ type Config struct {
 	PublicBaseURL     string
 	WrapperAPIKey     string
 	AdminToken        string
+	AdminUsername     string
+	AdminPassword     string
 	BananaBaseURL     string
 	BananaAPIKey      string
 	ModelPrefix       string
@@ -29,6 +31,8 @@ func LoadConfig() Config {
 		PublicBaseURL:     strings.TrimRight(env("PUBLIC_BASE_URL", ""), "/"),
 		WrapperAPIKey:     env("WRAPPER_API_KEY", ""),
 		AdminToken:        env("ADMIN_TOKEN", ""),
+		AdminUsername:     env("ADMIN_USERNAME", ""),
+		AdminPassword:     env("ADMIN_PASSWORD", ""),
 		BananaBaseURL:     strings.TrimRight(env("BANANA_API_BASE", "https://nb.gettoken.cn/openapi"), "/"),
 		BananaAPIKey:      env("BANANA_API_KEY", ""),
 		ModelPrefix:       env("MODEL_PREFIX", "banana-pro"),

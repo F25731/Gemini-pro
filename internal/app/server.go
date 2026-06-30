@@ -32,6 +32,7 @@ func (s *Server) Router() http.Handler {
 	router.GET("/v1/models", s.openAIAuth(), s.models)
 	router.POST("/v1/images/generations", s.openAIAuth(), s.imageGeneration)
 	router.POST("/v1/images/edits", s.openAIAuth(), s.imageEdit)
+	router.POST("/api/admin/login", s.adminLogin)
 
 	admin := router.Group("/api/admin", s.adminAuth())
 	admin.GET("/status", s.adminStatus)

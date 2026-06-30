@@ -5,6 +5,8 @@ const App = {
   data() {
     return {
       token: localStorage.getItem("banana-admin-token") || "",
+      username: "",
+      password: "",
       status: null,
       config: null,
       error: "",
@@ -31,6 +33,20 @@ const App = {
       localStorage.setItem("banana-admin-token", this.token);
       this.refresh();
     },
+    async login() {
+      try {
+        const response = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: this.username, password: this.password }),
+        });
+        await readJson(response);
+        this.error = "";
+        this.refresh();
+      } catch (error) {
+        this.error = error.message || "登录失败";
+      }
+    },
     async refresh() {
       try {
         const [status, config] = await Promise.all([
@@ -54,11 +70,19 @@ const App = {
           <p class="sub">一个模型三档清晰度，自动按请求类型转发文生图和图生图。</p>
         </div>
         <div class="token">
-          <label>管理 Token</label>
+          <label>管理登录</label>
           <div>
-            <input v-model="token" type="password" placeholder="ADMIN_TOKEN" @keyup.enter="saveToken" />
-            <button @click="saveToken">保存</button>
+            <input v-model="username" placeholder="用户名" @keyup.enter="login" />
+            <input v-model="password" type="password" placeholder="密码" @keyup.enter="login" />
+            <button @click="login">登录</button>
           </div>
+          <details>
+            <summary>Token 方式</summary>
+            <div>
+              <input v-model="token" type="password" placeholder="ADMIN_TOKEN" @keyup.enter="saveToken" />
+              <button @click="saveToken">保存</button>
+            </div>
+          </details>
         </div>
       </section>
 

@@ -54,6 +54,8 @@ http://SERVER_IP:3000/admin
 ```env
 WRAPPER_API_KEY=key-for-newapi
 ADMIN_TOKEN=admin-ui-token
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin-ui-password
 BANANA_API_KEY=gettoken-enterprise-api-key
 MAX_WORKERS=512
 MAX_QUEUE=20000
