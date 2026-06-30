@@ -57,7 +57,14 @@ func (s *Server) mountAdmin(router *gin.Engine) {
 	router.StaticFS("/assets", http.FS(assets))
 	}
 	router.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/admin") })
-	adminPage := func(c *gin.Context) { c.FileFromFS("index.html", http.FS(dist)) }
+	adminPage := func(c *gin.Context) {
+		body, err := webFS.ReadFile("web/dist/index.html")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"message": "admin page not found"}})
+			return
+		}
+		c.Data(http.StatusOK, "text/html; charset=utf-8", body)
+	}
 	router.GET("/admin", adminPage)
 	router.GET("/admin/", adminPage)
 	router.NoRoute(func(c *gin.Context) {
