@@ -24,6 +24,7 @@
     </section>
 
     <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="success" class="success">{{ success }}</p>
 
     <section v-if="status && config" class="grid">
       <div class="panel">
@@ -49,6 +50,8 @@
         <dl>
           <dt>Base URL</dt>
           <dd><code>{{ baseUrl }}</code></dd>
+          <dt>API Key</dt>
+          <dd><code>{{ config.wrapperApiKey || "未配置 WRAPPER_API_KEY" }}</code></dd>
           <dt>模型</dt>
           <dd>{{ config.models.join(", ") }}</dd>
           <dt>能力</dt>
@@ -96,6 +99,7 @@ export default {
       status: null,
       config: null,
       error: "",
+      success: "",
       timer: null,
     };
   },
@@ -117,6 +121,7 @@ export default {
   methods: {
     saveToken() {
       localStorage.setItem("banana-admin-token", this.token);
+      this.success = "管理 Token 已保存";
       this.refresh();
     },
     async login() {
@@ -128,8 +133,10 @@ export default {
         });
         await readJson(response);
         this.error = "";
+        this.success = "登录成功";
         this.refresh();
       } catch (error) {
+        this.success = "";
         this.error = error.message || "登录失败";
       }
     },
@@ -142,8 +149,11 @@ export default {
         });
         await readJson(response);
         this.bananaApiKey = "";
+        this.error = "";
+        this.success = "上游 GetToken API Key 配置成功";
         await this.refresh();
       } catch (error) {
+        this.success = "";
         this.error = error.message || "保存失败";
       }
     },

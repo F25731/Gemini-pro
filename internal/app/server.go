@@ -99,6 +99,8 @@ func (s *Server) adminConfig(c *gin.Context) {
 	runtime := s.runtime.Get()
 	c.JSON(http.StatusOK, gin.H{
 		"publicBaseUrl":     s.cfg.PublicBaseURL,
+		"wrapperApiKey":     s.cfg.WrapperAPIKey,
+		"wrapperApiKeySet":  s.cfg.WrapperAPIKey != "",
 		"bananaBaseUrl":     s.cfg.BananaBaseURL,
 		"bananaApiKeySet":   runtime.BananaAPIKey != "",
 		"bananaApiKeyHint":  maskKey(runtime.BananaAPIKey),
