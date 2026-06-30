@@ -28,6 +28,7 @@ func NewServer(cfg Config) *Server {
 
 func (s *Server) Router() http.Handler {
 	router := gin.New()
+	router.RedirectTrailingSlash = false
 	router.Use(gin.Recovery())
 	router.Use(cors())
 	router.GET("/health", s.health)
@@ -53,10 +54,12 @@ func (s *Server) mountAdmin(router *gin.Engine) {
 	assets, err := fs.Sub(webFS, "web/dist/assets")
 	if err == nil {
 		router.StaticFS("/admin/assets", http.FS(assets))
-		router.StaticFS("/assets", http.FS(assets))
+	router.StaticFS("/assets", http.FS(assets))
 	}
 	router.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/admin") })
-	router.GET("/admin", func(c *gin.Context) { c.FileFromFS("index.html", http.FS(dist)) })
+	adminPage := func(c *gin.Context) { c.FileFromFS("index.html", http.FS(dist)) }
+	router.GET("/admin", adminPage)
+	router.GET("/admin/", adminPage)
 	router.NoRoute(func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/admin") {
 			c.FileFromFS("index.html", http.FS(dist))
