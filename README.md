@@ -46,7 +46,7 @@ docker compose up -d --build
 Admin UI:
 
 ```text
-http://SERVER_IP:3000/admin
+http://SERVER_IP:HOST_PORT/admin
 ```
 
 You can set or replace the GetToken upstream API key in the admin UI. It is saved to `./data/config.json` and takes effect immediately.
