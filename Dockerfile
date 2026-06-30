@@ -11,6 +11,7 @@ COPY go.mod ./
 RUN go mod download
 COPY . ./
 COPY --from=web-builder /src/web/dist ./internal/app/web/dist
+RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/banana-wrapper ./cmd/server
 
 FROM alpine:3.20
