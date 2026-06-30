@@ -1,0 +1,182 @@
+:root {
+  color: #17201a;
+  background: #f5f7f2;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #d8dfd1;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #56704d;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+}
+
+h2 {
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+.sub {
+  margin: 12px 0 0;
+  color: #65705f;
+}
+
+.token {
+  min-width: 360px;
+}
+
+.token label {
+  display: block;
+  margin-bottom: 8px;
+  color: #65705f;
+  font-size: 13px;
+}
+
+.token div {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #cbd5c2;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #fff;
+}
+
+button {
+  height: 38px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 16px;
+  background: #256d3d;
+  color: #fff;
+  cursor: pointer;
+}
+
+.error {
+  margin: 18px 0 0;
+  padding: 12px;
+  border: 1px solid #efb0a3;
+  border-radius: 6px;
+  background: #fff1ee;
+  color: #9f2f1b;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.panel {
+  border: 1px solid #d8dfd1;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fff;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stats div {
+  padding: 12px;
+  border-radius: 6px;
+  background: #edf3e8;
+}
+
+.stats strong {
+  display: block;
+  font-size: 24px;
+}
+
+.stats span,
+dt {
+  color: #65705f;
+  font-size: 13px;
+}
+
+.models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+code {
+  border-radius: 5px;
+  padding: 3px 6px;
+  background: #edf3e8;
+  color: #245333;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+}
+
+dl {
+  margin: 0;
+}
+
+dt {
+  margin-top: 14px;
+}
+
+dt:first-child {
+  margin-top: 0;
+}
+
+dd {
+  margin: 5px 0 0;
+  word-break: break-all;
+}
+
+@media (max-width: 800px) {
+  .hero,
+  .grid {
+    display: block;
+  }
+
+  .token,
+  .panel {
+    margin-top: 16px;
+    min-width: 0;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

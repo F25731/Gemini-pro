@@ -1,0 +1,9 @@
+services:
+  banana-pro-wrapper:
+    build: .
+    image: banana-pro-wrapper:latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
