@@ -8,6 +8,7 @@ OpenAI-compatible wrapper for NewAPI -> GetToken model API.
 - `POST /v1/images/generations`
 - `POST /v1/images/edits`
 - `POST /v1/videos/generations`
+- `POST /v1/query`
 - `GET /health`
 - `GET /admin`
 
@@ -43,12 +44,15 @@ Image:
 - `/v1/images/edits` -> image-to-image
 - `/v1/images/generations` with `image_url` or `imageUrls` -> image-to-image
 - multipart `image` is uploaded to GetToken first, then sent as `imageUrls`
+- image endpoints submit an upstream task and poll internally, then return OpenAI-style `data[].url`
 
 Video:
 
 - `/v1/videos/generations` without images -> text-to-video
 - with `imageUrls` -> image-to-video
 - with `firstFrameUrl` and `lastFrameUrl` -> start/end-to-video for `veo3.1-pro-*`
+- video endpoints submit an upstream task and return `taskId` immediately
+- call `/v1/query` with `taskId` to poll until `SUCCESS`, then read `data[].url` or `results[].url`
 
 ## Deploy
 

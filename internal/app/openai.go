@@ -321,12 +321,19 @@ func (result BananaResult) ImageURLValue() string {
 }
 
 func (result BananaResult) VideoURLValue() string {
-	for _, value := range []string{result.VideoURL, result.VideoURLAlt, result.DownloadURL, result.URL} {
+	for _, value := range []string{result.VideoURL, result.VideoURLAlt, result.URL, result.DownloadURL} {
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}
 	}
 	return ""
+}
+
+func (result BananaResult) ResultURLValue() string {
+	if strings.EqualFold(result.OutputType, "mp4") || strings.EqualFold(result.OutputType, "video") {
+		return result.VideoURLValue()
+	}
+	return result.ImageURLValue()
 }
 
 func normalizeImageAspectRatio(size string) string {

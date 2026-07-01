@@ -42,6 +42,7 @@ func (s *Server) Router() http.Handler {
 	router.POST("/v1/videos/edits", s.openAIAuth(), s.videoGeneration)
 	router.POST("/v1/video/generations", s.openAIAuth(), s.videoGeneration)
 	router.POST("/v1/video/edits", s.openAIAuth(), s.videoGeneration)
+	router.POST("/v1/query", s.openAIAuth(), s.queryTask)
 	router.POST("/api/admin/login", s.adminLogin)
 
 	admin := router.Group("/api/admin", s.adminAuth())
