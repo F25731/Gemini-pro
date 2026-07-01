@@ -42,6 +42,7 @@ func (s *Server) runVideoTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		return
 	}
 
+	heartbeat := startJSONHeartbeat(c, s.cfg.HeartbeatInterval)
 	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.RequestTimeout)
 	defer cancel()
 
@@ -63,11 +64,11 @@ func (s *Server) runVideoTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		if errors.Is(err, ErrQueueFull) {
 			status = http.StatusTooManyRequests
 		}
-		openAIError(c, status, err.Error())
+		respondJSON(c, heartbeat, status, openAIErrorPayload(err.Error()))
 		return
 	}
 	ok = true
-	c.JSON(http.StatusOK, gin.H{"created": time.Now().Unix(), "data": items})
+	respondJSON(c, heartbeat, http.StatusOK, gin.H{"created": time.Now().Unix(), "data": items})
 }
 
 func (s *Server) runOneVideoTask(ctx context.Context, req ImageRequest, imageURLs []string, spec ModelSpec) ([]VideoOutput, error) {

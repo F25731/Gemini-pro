@@ -96,6 +96,7 @@
             <div class="metric"><span>Workers</span><strong>{{ config?.maxWorkers || 0 }}</strong></div>
             <div class="metric"><span>Queue capacity</span><strong>{{ config?.maxQueue || 0 }}</strong></div>
             <div class="metric"><span>Poll interval</span><strong>{{ config?.pollIntervalMs || 0 }} ms</strong></div>
+            <div class="metric"><span>Heartbeat</span><strong>{{ config?.heartbeatSec || 0 }} s</strong></div>
             <div class="metric"><span>Timeout</span><strong>{{ config?.requestTimeoutSec || 0 }} s</strong></div>
           </div>
         </div>

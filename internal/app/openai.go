@@ -139,6 +139,7 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		count = 8
 	}
 
+	heartbeat := startJSONHeartbeat(c, s.cfg.HeartbeatInterval)
 	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.RequestTimeout)
 	defer cancel()
 
@@ -180,11 +181,11 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		if errors.Is(err, ErrQueueFull) {
 			status = http.StatusTooManyRequests
 		}
-		openAIError(c, status, err.Error())
+		respondJSON(c, heartbeat, status, openAIErrorPayload(err.Error()))
 		return
 	}
 	ok = true
-	c.JSON(http.StatusOK, gin.H{"created": time.Now().Unix(), "data": outputs})
+	respondJSON(c, heartbeat, http.StatusOK, gin.H{"created": time.Now().Unix(), "data": outputs})
 }
 
 func (s *Server) runOneImageTask(ctx context.Context, req ImageRequest, imageURLs []string, spec ModelSpec, isEdit bool, index int) ([]ImageOutput, error) {
@@ -503,7 +504,11 @@ func safeFileName(name string) string {
 }
 
 func openAIError(c *gin.Context, status int, message string) {
-	c.JSON(status, gin.H{"error": gin.H{"message": message, "type": "invalid_request_error"}})
+	c.JSON(status, openAIErrorPayload(message))
+}
+
+func openAIErrorPayload(message string) gin.H {
+	return gin.H{"error": gin.H{"message": message, "type": "invalid_request_error"}}
 }
 
 func abs(value float64) float64 {

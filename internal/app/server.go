@@ -124,6 +124,7 @@ func (s *Server) adminConfig(c *gin.Context) {
 		"maxWorkers":        s.cfg.MaxWorkers,
 		"maxQueue":          s.cfg.MaxQueue,
 		"pollIntervalMs":    s.cfg.PollInterval.Milliseconds(),
+		"heartbeatSec":      int(s.cfg.HeartbeatInterval.Seconds()),
 		"requestTimeoutSec": int(s.cfg.RequestTimeout.Seconds()),
 		"returnB64JSON":     s.cfg.ReturnB64JSON,
 		"models":            s.cfg.Models(),

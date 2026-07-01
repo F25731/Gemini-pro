@@ -21,6 +21,7 @@ type Config struct {
 	MaxWorkers        int
 	MaxQueue          int
 	PollInterval      time.Duration
+	HeartbeatInterval time.Duration
 	RequestTimeout    time.Duration
 	BananaHTTPTimeout time.Duration
 	ReturnB64JSON     bool
@@ -41,6 +42,7 @@ func LoadConfig() Config {
 		MaxWorkers:        envInt("MAX_WORKERS", 2000),
 		MaxQueue:          envInt("MAX_QUEUE", 50000),
 		PollInterval:      time.Duration(envInt("BANANA_POLL_INTERVAL_MS", 2500)) * time.Millisecond,
+		HeartbeatInterval: time.Duration(envInt("RESPONSE_HEARTBEAT_SECONDS", 15)) * time.Second,
 		RequestTimeout:    time.Duration(envInt("REQUEST_TIMEOUT_SECONDS", 600)) * time.Second,
 		BananaHTTPTimeout: time.Duration(envInt("BANANA_HTTP_TIMEOUT_SECONDS", 60)) * time.Second,
 		ReturnB64JSON:     envBool("RETURN_B64_JSON", false),
