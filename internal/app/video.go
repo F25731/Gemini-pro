@@ -115,7 +115,7 @@ func (s *Server) runOneVideoTask(ctx context.Context, req ImageRequest, imageURL
 	}
 	outputs := make([]VideoOutput, 0, len(done.Results))
 	for _, result := range done.Results {
-		if url := result.ImageURLValue(); url != "" {
+		if url := result.VideoURLValue(); url != "" {
 			outputs = append(outputs, VideoOutput{URL: url})
 		}
 	}

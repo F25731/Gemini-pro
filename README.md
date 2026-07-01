@@ -20,8 +20,8 @@ Image models:
 
 Video models:
 
-- `veo31-pro-720p`, `veo31-pro-1080p`, `veo31-pro-4k`
-- `veo31-fast-720p`, `veo31-fast-1080p`, `veo31-fast-4k`
+- `veo3.1-pro-720p`, `veo3.1-pro-1080p`, `veo3.1-pro-4k`
+- `veo3.1-fast-720p`, `veo3.1-fast-1080p`, `veo3.1-fast-4k`
 
 GPT Image 2 is intentionally not exposed.
 
@@ -32,7 +32,7 @@ Create an OpenAI-compatible channel:
 ```text
 Base URL: https://your-wrapper-domain/v1
 API Key: WRAPPER_API_KEY from .env
-Models: banana-pro-1k,banana-pro-2k,banana-pro-4k,banana2-512,banana2-1k,banana2-2k,banana2-4k,veo31-pro-720p,veo31-pro-1080p,veo31-pro-4k,veo31-fast-720p,veo31-fast-1080p,veo31-fast-4k
+Models: banana-pro-1k,banana-pro-2k,banana-pro-4k,banana2-512,banana2-1k,banana2-2k,banana2-4k,veo3.1-pro-720p,veo3.1-pro-1080p,veo3.1-pro-4k,veo3.1-fast-720p,veo3.1-fast-1080p,veo3.1-fast-4k
 ```
 
 ## Mapping
@@ -48,7 +48,7 @@ Video:
 
 - `/v1/videos/generations` without images -> text-to-video
 - with `imageUrls` -> image-to-video
-- with `firstFrameUrl` and `lastFrameUrl` -> start/end-to-video for `veo31-pro-*`
+- with `firstFrameUrl` and `lastFrameUrl` -> start/end-to-video for `veo3.1-pro-*`
 
 ## Deploy
 

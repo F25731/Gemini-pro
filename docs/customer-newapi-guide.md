@@ -46,13 +46,13 @@ banana2-4k
 ### 视频模型
 
 ```text
-veo31-pro-720p
-veo31-pro-1080p
-veo31-pro-4k
+veo3.1-pro-720p
+veo3.1-pro-1080p
+veo3.1-pro-4k
 
-veo31-fast-720p
-veo31-fast-1080p
-veo31-fast-4k
+veo3.1-fast-720p
+veo3.1-fast-1080p
+veo3.1-fast-4k
 ```
 
 说明：
@@ -60,7 +60,7 @@ veo31-fast-4k
 - 视频模型不区分文生视频和图生视频。
 - 请求里没有参考图时，自动按文生视频处理。
 - 请求里有 `imageUrls` 时，自动按图生视频处理。
-- `veo31-pro-*` 支持首尾帧视频。
+- `veo3.1-pro-*` 支持首尾帧视频。
 - 暂不支持上传参考视频。
 
 ## 3. 查看可用模型
@@ -139,7 +139,7 @@ curl https://api.zmoapi.cn/v1/videos/generations \
   -H "Authorization: Bearer sk-xxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "veo31-fast-720p",
+    "model": "veo3.1-fast-720p",
     "prompt": "黄昏海岸线上的未来城市，镜头缓慢推进",
     "aspectRatio": "16:9",
     "duration": "8"
@@ -153,7 +153,7 @@ curl https://api.zmoapi.cn/v1/videos/generations \
   -H "Authorization: Bearer sk-xxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "veo31-pro-1080p",
+    "model": "veo3.1-pro-1080p",
     "prompt": "根据参考图生成自然运镜，保持主体一致",
     "imageUrls": [
       "https://example.com/first-frame.png"
@@ -170,7 +170,7 @@ curl https://api.zmoapi.cn/v1/videos/generations \
   -H "Authorization: Bearer sk-xxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "veo31-pro-1080p",
+    "model": "veo3.1-pro-1080p",
     "prompt": "从首帧自然过渡到尾帧，镜头平滑推进",
     "firstFrameUrl": "https://example.com/start.png",
     "lastFrameUrl": "https://example.com/end.png",
@@ -183,7 +183,7 @@ curl https://api.zmoapi.cn/v1/videos/generations \
 
 ```json
 {
-  "model": "veo31-pro-1080p",
+  "model": "veo3.1-pro-1080p",
   "prompt": "从第一张图自然过渡到第二张图",
   "imageUrls": [
     "https://example.com/start.png",
@@ -288,7 +288,7 @@ print(result.data[0].url)
 
 ### 视频模型是否要区分文生视频和图生视频？
 
-不需要。客户只需要选择分辨率模型，例如 `veo31-pro-1080p`。
+不需要。客户只需要选择分辨率模型，例如 `veo3.1-pro-1080p`。
 
 - 没有参考图：文生视频
 - 有 1 张参考图：图生视频

@@ -217,7 +217,7 @@ const totalMetrics = computed(() => {
   return { successRate: total ? ok / total : 0, avgLatencyMs: total ? Math.round(latencyTotal / total) : 0 };
 });
 const metricRows = computed(() => {
-  const labels = { image: "Images", video: "Videos", "banana-pro": "Banana Pro", banana2: "Banana2", "veo31-pro": "Veo3.1 Pro", "veo31-fast": "Veo3.1 Fast" };
+  const labels = { image: "Images", video: "Videos", "banana-pro": "Banana Pro", banana2: "Banana2", "veo3.1-pro": "Veo3.1 Pro", "veo3.1-fast": "Veo3.1 Fast" };
   return Object.entries(status.value?.metrics || {}).map(([key, data]) => ({ key, label: labels[key] || key, data }));
 });
 

@@ -312,7 +312,16 @@ func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult,
 }
 
 func (result BananaResult) ImageURLValue() string {
-	for _, value := range []string{result.URL, result.ImageURL, result.ImageURLAlt, result.VideoURL, result.VideoURLAlt, result.DownloadURL} {
+	for _, value := range []string{result.ImageURL, result.ImageURLAlt, result.URL, result.DownloadURL} {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func (result BananaResult) VideoURLValue() string {
+	for _, value := range []string{result.VideoURL, result.VideoURLAlt, result.DownloadURL, result.URL} {
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}

@@ -83,8 +83,8 @@ func allModelSpecs() []ModelSpec {
 		label          string
 		startEnd       bool
 	}{
-		{"veo31-pro", "veo3.1-pro", "Veo3.1 Pro", true},
-		{"veo31-fast", "veo3.1-fast", "Veo3.1 Fast", false},
+		{"veo3.1-pro", "veo3.1-pro", "Veo3.1 Pro", true},
+		{"veo3.1-fast", "veo3.1-fast", "Veo3.1 Fast", false},
 	} {
 		for _, resolution := range []string{"720p", "1080p", "4k"} {
 			spec := ModelSpec{
