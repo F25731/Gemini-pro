@@ -183,6 +183,37 @@ button {
   color: #15803d;
 }
 
+.empty {
+  border-radius: 6px;
+  padding: 14px;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.secret-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+}
+
+.secret-state i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.secret-state.set {
+  color: #111827;
+}
+
+.secret-state.set i {
+  background: #111827;
+  box-shadow: 14px 0 0 #111827, 28px 0 0 #111827;
+  margin-right: 28px;
+}
+
 .view {
   display: grid;
   gap: 16px;
