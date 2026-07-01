@@ -139,7 +139,7 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		count = 8
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), s.cfg.RequestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.RequestTimeout)
 	defer cancel()
 
 	started := time.Now()
@@ -213,11 +213,13 @@ func (s *Server) runOneImageTask(ctx context.Context, req ImageRequest, imageURL
 	if err != nil {
 		return nil, err
 	}
-	done, err := s.client.Wait(ctx, task.TaskID)
+	waitCtx, cancel := context.WithTimeout(context.Background(), s.cfg.RequestTimeout)
+	defer cancel()
+	done, err := s.client.Wait(waitCtx, task.TaskID)
 	if err != nil {
 		return nil, err
 	}
-	return s.outputsFromResults(ctx, done.Results, req.ResponseFormat)
+	return s.outputsFromResults(waitCtx, done.Results, req.ResponseFormat)
 }
 
 func (s *Server) parseEditRequest(c *gin.Context) (ImageRequest, []string, error) {

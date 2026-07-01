@@ -78,22 +78,28 @@ func (c *BananaClient) Submit(ctx context.Context, path string, req BananaSubmit
 func (c *BananaClient) Wait(ctx context.Context, taskID string) (BananaTask, error) {
 	ticker := time.NewTicker(c.cfg.PollInterval)
 	defer ticker.Stop()
+	var lastErr error
 	for {
 		task, err := c.Query(ctx, taskID)
 		if err != nil {
-			return BananaTask{}, err
-		}
-		switch strings.ToUpper(task.Status) {
-		case "SUCCESS":
-			if len(task.Results) == 0 {
-				return BananaTask{}, errors.New("banana task succeeded without results")
+			lastErr = err
+		} else {
+			lastErr = nil
+			switch strings.ToUpper(task.Status) {
+			case "SUCCESS":
+				if len(task.Results) == 0 {
+					return BananaTask{}, errors.New("banana task succeeded without results")
+				}
+				return task, nil
+			case "FAILED", "TIMEOUT", "CANCELED":
+				return BananaTask{}, fmt.Errorf("banana task %s: %s", task.Status, bananaError(task))
 			}
-			return task, nil
-		case "FAILED", "TIMEOUT", "CANCELED":
-			return BananaTask{}, fmt.Errorf("banana task %s: %s", task.Status, bananaError(task))
 		}
 		select {
 		case <-ctx.Done():
+			if lastErr != nil {
+				return BananaTask{}, fmt.Errorf("%w: last banana query error: %v", ctx.Err(), lastErr)
+			}
 			return BananaTask{}, ctx.Err()
 		case <-ticker.C:
 		}
