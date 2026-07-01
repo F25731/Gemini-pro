@@ -38,10 +38,6 @@ func (s *Server) Router() http.Handler {
 	router.POST("/v1/completions", s.openAIAuth(), s.completions)
 	router.POST("/v1/images/generations", s.openAIAuth(), s.imageGeneration)
 	router.POST("/v1/images/edits", s.openAIAuth(), s.imageEdit)
-	router.POST("/v1/videos/generations", s.openAIAuth(), s.videoGeneration)
-	router.POST("/v1/videos/edits", s.openAIAuth(), s.videoGeneration)
-	router.POST("/v1/video/generations", s.openAIAuth(), s.videoGeneration)
-	router.POST("/v1/video/edits", s.openAIAuth(), s.videoGeneration)
 	router.POST("/api/admin/login", s.adminLogin)
 
 	admin := router.Group("/api/admin", s.adminAuth())
@@ -92,12 +88,7 @@ func (s *Server) models(c *gin.Context) {
 	specs := publicModelSpecs()
 	data := make([]gin.H, 0, len(specs))
 	for _, spec := range specs {
-		endpoints := []string{"openai"}
-		if spec.Media == MediaImage {
-			endpoints = append(endpoints, "images")
-		} else {
-			endpoints = append(endpoints, "videos")
-		}
+		endpoints := []string{"openai", "images"}
 		data = append(data, gin.H{"id": spec.ID, "object": "model", "created": 0, "owned_by": "banana-wrapper", "supported_endpoint_types": endpoints})
 	}
 	c.JSON(http.StatusOK, gin.H{"object": "list", "data": data})

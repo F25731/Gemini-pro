@@ -107,7 +107,6 @@
           <h2>Model capabilities</h2>
           <div class="capability-groups">
             <CapabilityTable title="Image models" :models="imageModels" />
-            <CapabilityTable title="Video models" :models="videoModels" />
           </div>
         </div>
       </section>
@@ -120,16 +119,6 @@
           <div class="metric"><span>Failed</span><strong>{{ imageMetrics.failed || 0 }}</strong></div>
         </div>
         <ModelGrid title="Image models" :models="imageModels" />
-      </section>
-
-      <section v-if="view === 'videos'" class="view">
-        <div class="cards">
-          <div class="metric"><span>Video success rate</span><strong>{{ formatRate(videoMetrics.successRate) }}</strong></div>
-          <div class="metric"><span>Video avg latency</span><strong>{{ formatMs(videoMetrics.avgLatencyMs) }}</strong></div>
-          <div class="metric"><span>Success</span><strong>{{ videoMetrics.success || 0 }}</strong></div>
-          <div class="metric"><span>Failed</span><strong>{{ videoMetrics.failed || 0 }}</strong></div>
-        </div>
-        <ModelGrid title="Video models" :models="videoModels" />
       </section>
     </main>
   </div>
@@ -144,14 +133,14 @@ const CapabilityTable = defineComponent({
     return () => h("section", { class: "capability-section" }, [
       h("h3", props.title),
       h("div", { class: "cap-table" }, [
-        h("div", { class: "cap-row head" }, ["Model", "Features", "References", "Quality", "Ratio / duration", "Notes"].map((text) => h("span", text))),
+        h("div", { class: "cap-row head" }, ["Model", "Features", "References", "Quality", "Aspect ratios", "Notes"].map((text) => h("span", text))),
         props.models.length === 0 ? h("div", { class: "empty" }, "No model data.") : null,
         ...props.models.map((model) => h("div", { class: "cap-row", key: model.id }, [
           h("span", [h("strong", model.id), h("small", model.name)]),
           h("span", model.capabilities?.join(" / ") || "-"),
           h("span", [refsText(model), model.maxFileSizeMb ? h("small", `per image ${model.maxFileSizeMb}MB`) : null]),
           h("span", model.qualityTiers?.join(" / ") || model.resolution),
-          h("span", [model.aspectRatios?.join(" / ") || "-", model.durationOptions?.length ? h("small", `duration ${model.durationOptions.join(" / ")}s`) : null]),
+          h("span", model.aspectRatios?.join(" / ") || "-"),
           h("span", model.notes?.join("; ") || "-"),
         ])),
       ]),
@@ -170,7 +159,6 @@ const ModelGrid = defineComponent({
         h("span", model.name),
         h("code", model.textEndpoint),
         model.imageEndpoint ? h("code", model.imageEndpoint) : null,
-        model.startEndEndpoint ? h("code", model.startEndEndpoint) : null,
       ]))),
     ]);
   },
@@ -192,7 +180,6 @@ const navItems = [
   { key: "config", label: "API config", icon: "A" },
   { key: "capabilities", label: "Capabilities", icon: "C" },
   { key: "images", label: "Images", icon: "I" },
-  { key: "videos", label: "Videos", icon: "V" },
 ];
 
 const currentNav = computed(() => navItems.find((item) => item.key === view.value));
@@ -201,24 +188,17 @@ const currentTitle = computed(() => ({
   config: "NewAPI and upstream config",
   capabilities: "Model capability matrix",
   images: "Image monitoring",
-  videos: "Video monitoring",
 }[view.value] || "Dashboard"));
 const baseUrl = computed(() => config.value?.publicBaseUrl || `${location.origin}/v1`);
 const modelSpecs = computed(() => config.value?.modelSpecs || []);
 const imageModels = computed(() => modelSpecs.value.filter((item) => item.media === "image"));
-const videoModels = computed(() => modelSpecs.value.filter((item) => item.media === "video"));
 const imageMetrics = computed(() => status.value?.metrics?.image || {});
-const videoMetrics = computed(() => status.value?.metrics?.video || {});
 const totalMetrics = computed(() => {
   const image = imageMetrics.value;
-  const video = videoMetrics.value;
-  const total = Number(image.total || 0) + Number(video.total || 0);
-  const ok = Number(image.success || 0) + Number(video.success || 0);
-  const latencyTotal = Number(image.avgLatencyMs || 0) * Number(image.total || 0) + Number(video.avgLatencyMs || 0) * Number(video.total || 0);
-  return { successRate: total ? ok / total : 0, avgLatencyMs: total ? Math.round(latencyTotal / total) : 0 };
+  return { successRate: Number(image.successRate || 0), avgLatencyMs: Number(image.avgLatencyMs || 0) };
 });
 const metricRows = computed(() => {
-  const labels = { image: "Images", video: "Videos", "banana-pro": "Banana Pro", banana2: "Banana2", "veo3.1-pro": "Veo3.1 Pro", "veo3.1-fast": "Veo3.1 Fast" };
+  const labels = { image: "Images", "banana-pro": "Banana Pro", banana2: "Banana2" };
   return Object.entries(status.value?.metrics || {}).map(([key, data]) => ({ key, label: labels[key] || key, data }));
 });
 

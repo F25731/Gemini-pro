@@ -20,15 +20,12 @@ type BananaClient struct {
 }
 
 type BananaSubmitRequest struct {
-	Prompt        string   `json:"prompt"`
-	ImageURLs     []string `json:"imageUrls,omitempty"`
-	FirstFrameURL string `json:"firstFrameUrl,omitempty"`
-	LastFrameURL  string `json:"lastFrameUrl,omitempty"`
-	AspectRatio   string `json:"aspectRatio,omitempty"`
-	Resolution    string `json:"resolution"`
-	Duration      string `json:"duration,omitempty"`
-	WebhookURL    string `json:"webhookUrl,omitempty"`
-	ClientTaskID  string `json:"clientTaskId,omitempty"`
+	Prompt       string   `json:"prompt"`
+	ImageURLs    []string `json:"imageUrls,omitempty"`
+	AspectRatio  string   `json:"aspectRatio,omitempty"`
+	Resolution   string   `json:"resolution"`
+	WebhookURL   string   `json:"webhookUrl,omitempty"`
+	ClientTaskID string   `json:"clientTaskId,omitempty"`
 }
 
 type BananaTask struct {
@@ -43,20 +40,11 @@ type BananaTask struct {
 }
 
 type BananaResult struct {
-	URL             string `json:"url"`
-	ImageURL        string `json:"imageUrl"`
-	ImageURLAlt     string `json:"image_url"`
-	VideoURL        string `json:"videoUrl"`
-	VideoURLAlt     string `json:"video_url"`
-	DownloadURL     string `json:"download_url"`
-	CoverURL        string `json:"coverUrl"`
-	CoverURLAlt     string `json:"cover_url"`
-	ThumbnailURL    string `json:"thumbnailUrl"`
-	ThumbnailURLAlt string `json:"thumbnail_url"`
-	PreviewURL      string `json:"previewUrl"`
-	PreviewURLAlt   string `json:"preview_url"`
-	OutputType      string `json:"outputType"`
-	Text            string `json:"text"`
+	URL         string `json:"url"`
+	ImageURL    string `json:"imageUrl"`
+	ImageURLAlt string `json:"image_url"`
+	DownloadURL string `json:"download_url"`
+	Text        string `json:"text"`
 }
 
 func NewBananaClient(cfg Config, runtime *RuntimeStore) *BananaClient {

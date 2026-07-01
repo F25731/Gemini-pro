@@ -26,13 +26,10 @@ type ImageRequest struct {
 	Quality        string   `json:"quality"`
 	AspectRatio    string   `json:"aspectRatio"`
 	Resolution     string   `json:"resolution"`
-	Duration       string   `json:"duration"`
 	N              int      `json:"n"`
 	ResponseFormat string   `json:"response_format"`
 	ImageURL       string   `json:"image_url"`
 	ImageURLs      []string `json:"imageUrls"`
-	FirstFrameURL  string   `json:"firstFrameUrl"`
-	LastFrameURL   string   `json:"lastFrameUrl"`
 	WebhookURL     string   `json:"webhookUrl"`
 	ClientTaskID   string   `json:"clientTaskId"`
 }
@@ -124,7 +121,7 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		return
 	}
 	if spec.Media != MediaImage {
-		openAIError(c, http.StatusBadRequest, fmt.Sprintf("model %q is a video model", req.Model))
+		openAIError(c, http.StatusBadRequest, fmt.Sprintf("model %q is not an image model", req.Model))
 		return
 	}
 	if strings.TrimSpace(req.Prompt) == "" {
@@ -257,9 +254,6 @@ func (s *Server) parseEditRequest(c *gin.Context) (ImageRequest, []string, error
 		ClientTaskID:   formValue(form, "clientTaskId"),
 		AspectRatio:    formValue(form, "aspectRatio"),
 		Resolution:     formValue(form, "resolution"),
-		Duration:       formValue(form, "duration"),
-		FirstFrameURL:  formValue(form, "firstFrameUrl"),
-		LastFrameURL:   formValue(form, "lastFrameUrl"),
 	}
 	if n, _ := strconv.Atoi(formValue(form, "n")); n > 0 {
 		req.N = n
@@ -315,97 +309,12 @@ func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult,
 }
 
 func (result BananaResult) ImageURLValue() string {
-	if result.isVideo() {
-		return ""
-	}
 	for _, value := range []string{result.ImageURL, result.ImageURLAlt, result.URL, result.DownloadURL} {
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}
 	}
 	return ""
-}
-
-func (result BananaResult) VideoURLValue() string {
-	for _, value := range []string{result.VideoURL, result.VideoURLAlt} {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	if !result.isVideo() {
-		return ""
-	}
-	for _, value := range []string{result.URL, result.DownloadURL} {
-		if !isVideoURL(value) {
-			continue
-		}
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	return ""
-}
-
-func (result BananaResult) ResultURLValue() string {
-	if result.isVideo() {
-		return result.VideoURLValue()
-	}
-	return result.ImageURLValue()
-}
-
-func (result BananaResult) CoverURLValue() string {
-	for _, value := range []string{result.CoverURL, result.CoverURLAlt} {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	for _, value := range []string{result.ImageURL, result.ImageURLAlt, result.URL, result.DownloadURL} {
-		if isImageURL(value) {
-			return strings.TrimSpace(value)
-		}
-	}
-	return ""
-}
-
-func (result BananaResult) ThumbnailURLValue() string {
-	for _, value := range []string{result.ThumbnailURL, result.ThumbnailURLAlt} {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	return result.CoverURLValue()
-}
-
-func (result BananaResult) PreviewURLValue() string {
-	for _, value := range []string{result.PreviewURL, result.PreviewURLAlt} {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	return result.ThumbnailURLValue()
-}
-
-func (result BananaResult) isVideo() bool {
-	outputType := strings.ToLower(strings.TrimSpace(result.OutputType))
-	if outputType == "mp4" || outputType == "mov" || outputType == "webm" || outputType == "video" {
-		return true
-	}
-	for _, value := range []string{result.URL, result.VideoURL, result.VideoURLAlt, result.DownloadURL} {
-		if isVideoURL(value) {
-			return true
-		}
-	}
-	return false
-}
-
-func isVideoURL(value string) bool {
-	lower := strings.ToLower(strings.TrimSpace(value))
-	return strings.Contains(lower, ".mp4") || strings.Contains(lower, ".mov") || strings.Contains(lower, ".webm")
-}
-
-func isImageURL(value string) bool {
-	lower := strings.ToLower(strings.TrimSpace(value))
-	return strings.Contains(lower, ".png") || strings.Contains(lower, ".jpg") || strings.Contains(lower, ".jpeg") || strings.Contains(lower, ".webp")
 }
 
 func normalizeImageAspectRatio(size string) string {
@@ -442,21 +351,6 @@ func normalizeImageAspectRatio(size string) string {
 		}
 	}
 	return best.label
-}
-
-func normalizeVideoAspectRatio(value string) string {
-	value = strings.TrimSpace(value)
-	if value == "9:16" {
-		return value
-	}
-	return "16:9"
-}
-
-func normalizeVideoDuration(value string) string {
-	if strings.TrimSpace(value) == "" {
-		return "8"
-	}
-	return "8"
 }
 
 func firstNonEmpty(values ...string) string {
@@ -508,7 +402,7 @@ func openAIError(c *gin.Context, status int, message string) {
 }
 
 func openAIErrorPayload(message string) gin.H {
-	return gin.H{"error": gin.H{"message": message, "type": "invalid_request_error"}}
+	return gin.H{"error": gin.H{"message": message, "type": "invalid_request_error", "code": "upstream_failed"}}
 }
 
 func abs(value float64) float64 {
