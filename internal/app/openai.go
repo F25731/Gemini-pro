@@ -333,6 +333,9 @@ func (result BananaResult) VideoURLValue() string {
 		return ""
 	}
 	for _, value := range []string{result.URL, result.DownloadURL} {
+		if !isVideoURL(value) {
+			continue
+		}
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}
@@ -347,18 +350,59 @@ func (result BananaResult) ResultURLValue() string {
 	return result.ImageURLValue()
 }
 
+func (result BananaResult) CoverURLValue() string {
+	for _, value := range []string{result.CoverURL, result.CoverURLAlt} {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	for _, value := range []string{result.ImageURL, result.ImageURLAlt, result.URL, result.DownloadURL} {
+		if isImageURL(value) {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func (result BananaResult) ThumbnailURLValue() string {
+	for _, value := range []string{result.ThumbnailURL, result.ThumbnailURLAlt} {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return result.CoverURLValue()
+}
+
+func (result BananaResult) PreviewURLValue() string {
+	for _, value := range []string{result.PreviewURL, result.PreviewURLAlt} {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return result.ThumbnailURLValue()
+}
+
 func (result BananaResult) isVideo() bool {
 	outputType := strings.ToLower(strings.TrimSpace(result.OutputType))
 	if outputType == "mp4" || outputType == "mov" || outputType == "webm" || outputType == "video" {
 		return true
 	}
 	for _, value := range []string{result.URL, result.VideoURL, result.VideoURLAlt, result.DownloadURL} {
-		lower := strings.ToLower(strings.TrimSpace(value))
-		if strings.Contains(lower, ".mp4") || strings.Contains(lower, ".mov") || strings.Contains(lower, ".webm") {
+		if isVideoURL(value) {
 			return true
 		}
 	}
 	return false
+}
+
+func isVideoURL(value string) bool {
+	lower := strings.ToLower(strings.TrimSpace(value))
+	return strings.Contains(lower, ".mp4") || strings.Contains(lower, ".mov") || strings.Contains(lower, ".webm")
+}
+
+func isImageURL(value string) bool {
+	lower := strings.ToLower(strings.TrimSpace(value))
+	return strings.Contains(lower, ".png") || strings.Contains(lower, ".jpg") || strings.Contains(lower, ".jpeg") || strings.Contains(lower, ".webp")
 }
 
 func normalizeImageAspectRatio(size string) string {

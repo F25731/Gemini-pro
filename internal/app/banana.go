@@ -43,14 +43,20 @@ type BananaTask struct {
 }
 
 type BananaResult struct {
-	URL         string `json:"url"`
-	ImageURL    string `json:"imageUrl"`
-	ImageURLAlt string `json:"image_url"`
-	VideoURL    string `json:"videoUrl"`
-	VideoURLAlt string `json:"video_url"`
-	DownloadURL string `json:"download_url"`
-	OutputType  string `json:"outputType"`
-	Text        string `json:"text"`
+	URL             string `json:"url"`
+	ImageURL        string `json:"imageUrl"`
+	ImageURLAlt     string `json:"image_url"`
+	VideoURL        string `json:"videoUrl"`
+	VideoURLAlt     string `json:"video_url"`
+	DownloadURL     string `json:"download_url"`
+	CoverURL        string `json:"coverUrl"`
+	CoverURLAlt     string `json:"cover_url"`
+	ThumbnailURL    string `json:"thumbnailUrl"`
+	ThumbnailURLAlt string `json:"thumbnail_url"`
+	PreviewURL      string `json:"previewUrl"`
+	PreviewURLAlt   string `json:"preview_url"`
+	OutputType      string `json:"outputType"`
+	Text            string `json:"text"`
 }
 
 func NewBananaClient(cfg Config, runtime *RuntimeStore) *BananaClient {

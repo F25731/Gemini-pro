@@ -12,7 +12,10 @@ import (
 )
 
 type VideoOutput struct {
-	URL string `json:"url,omitempty"`
+	URL          string `json:"url,omitempty"`
+	CoverURL     string `json:"cover_url,omitempty"`
+	ThumbnailURL string `json:"thumbnail_url,omitempty"`
+	PreviewURL   string `json:"preview_url,omitempty"`
 }
 
 func (s *Server) videoGeneration(c *gin.Context) {
@@ -116,7 +119,12 @@ func (s *Server) runOneVideoTask(ctx context.Context, req ImageRequest, imageURL
 	outputs := make([]VideoOutput, 0, len(done.Results))
 	for _, result := range done.Results {
 		if url := result.VideoURLValue(); url != "" {
-			outputs = append(outputs, VideoOutput{URL: url})
+			outputs = append(outputs, VideoOutput{
+				URL:          url,
+				CoverURL:     result.CoverURLValue(),
+				ThumbnailURL: result.ThumbnailURLValue(),
+				PreviewURL:   result.PreviewURLValue(),
+			})
 		}
 	}
 	if len(outputs) == 0 {
