@@ -312,6 +312,9 @@ func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult,
 }
 
 func (result BananaResult) ImageURLValue() string {
+	if result.isVideo() {
+		return ""
+	}
 	for _, value := range []string{result.ImageURL, result.ImageURLAlt, result.URL, result.DownloadURL} {
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
@@ -321,7 +324,15 @@ func (result BananaResult) ImageURLValue() string {
 }
 
 func (result BananaResult) VideoURLValue() string {
-	for _, value := range []string{result.VideoURL, result.VideoURLAlt, result.URL, result.DownloadURL} {
+	for _, value := range []string{result.VideoURL, result.VideoURLAlt} {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	if !result.isVideo() {
+		return ""
+	}
+	for _, value := range []string{result.URL, result.DownloadURL} {
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}
@@ -330,10 +341,24 @@ func (result BananaResult) VideoURLValue() string {
 }
 
 func (result BananaResult) ResultURLValue() string {
-	if strings.EqualFold(result.OutputType, "mp4") || strings.EqualFold(result.OutputType, "video") {
+	if result.isVideo() {
 		return result.VideoURLValue()
 	}
 	return result.ImageURLValue()
+}
+
+func (result BananaResult) isVideo() bool {
+	outputType := strings.ToLower(strings.TrimSpace(result.OutputType))
+	if outputType == "mp4" || outputType == "mov" || outputType == "webm" || outputType == "video" {
+		return true
+	}
+	for _, value := range []string{result.URL, result.VideoURL, result.VideoURLAlt, result.DownloadURL} {
+		lower := strings.ToLower(strings.TrimSpace(value))
+		if strings.Contains(lower, ".mp4") || strings.Contains(lower, ".mov") || strings.Contains(lower, ".webm") {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeImageAspectRatio(size string) string {
