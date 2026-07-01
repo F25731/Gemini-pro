@@ -90,6 +90,16 @@
         </div>
       </section>
 
+      <section v-if="view === 'capabilities'" class="view">
+        <div class="panel">
+          <h2>模型能力总览</h2>
+          <div class="capability-groups">
+            <CapabilityTable title="图片模型" :models="imageModels" />
+            <CapabilityTable title="视频模型" :models="videoModels" />
+          </div>
+        </div>
+      </section>
+
       <section v-if="view === 'images'" class="view">
         <div class="cards">
           <MetricCard label="图片成功率" :value="formatRate(imageMetrics.successRate)" />
@@ -119,6 +129,40 @@ const MetricCard = {
   template: `<div class="metric"><span>{{ label }}</span><strong>{{ value }}</strong></div>`,
 };
 
+const CapabilityTable = {
+  props: ["title", "models"],
+  methods: {
+    refs(model) {
+      if (!model.maxImageInputs) return "0 张";
+      if (model.minImageInputs && model.minImageInputs !== model.maxImageInputs) {
+        return `${model.minImageInputs}-${model.maxImageInputs} 张`;
+      }
+      return `最多 ${model.maxImageInputs} 张`;
+    },
+  },
+  template: `
+    <section class="capability-section">
+      <h3>{{ title }}</h3>
+      <div class="cap-table">
+        <div class="cap-row head">
+          <span>模型</span><span>支持能力</span><span>参考图</span><span>画质/分辨率</span><span>比例/时长</span><span>说明</span>
+        </div>
+        <div v-for="model in models" :key="model.id" class="cap-row">
+          <span><strong>{{ model.id }}</strong><small>{{ model.name }}</small></span>
+          <span>{{ model.capabilities?.join(" / ") || "-" }}</span>
+          <span>{{ refs(model) }}<small v-if="model.maxFileSizeMb">单图 {{ model.maxFileSizeMb }}MB</small></span>
+          <span>{{ model.qualityTiers?.join(" / ") || model.resolution }}</span>
+          <span>
+            {{ model.aspectRatios?.join(" / ") || "-" }}
+            <small v-if="model.durationOptions?.length">时长 {{ model.durationOptions.join(" / ") }} 秒</small>
+          </span>
+          <span>{{ model.notes?.join("；") || "-" }}</span>
+        </div>
+      </div>
+    </section>
+  `,
+};
+
 const ModelPanel = {
   props: ["title", "models"],
   template: `
@@ -138,7 +182,7 @@ const ModelPanel = {
 };
 
 export default {
-  components: { MetricCard, ModelPanel },
+  components: { MetricCard, ModelPanel, CapabilityTable },
   data() {
     return {
       collapsed: false,
@@ -154,6 +198,7 @@ export default {
       navItems: [
         { key: "dashboard", label: "监控板", icon: "M" },
         { key: "config", label: "API 配置", icon: "A" },
+        { key: "capabilities", label: "模型能力", icon: "C" },
         { key: "images", label: "图片监控", icon: "I" },
         { key: "videos", label: "视频监控", icon: "V" },
       ],
@@ -167,6 +212,7 @@ export default {
       const titleMap = {
         dashboard: "实时运行概览",
         config: "接入与上游配置",
+        capabilities: "模型能力说明",
         images: "图片任务监控",
         videos: "视频任务监控",
       };

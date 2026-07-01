@@ -255,6 +255,54 @@ button {
   font-weight: 700;
 }
 
+.capability-groups {
+  display: grid;
+  gap: 22px;
+}
+
+.capability-section h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.cap-table {
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.cap-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.1fr) minmax(110px, .9fr) minmax(110px, .8fr) minmax(130px, 1fr) minmax(180px, 1.2fr) minmax(220px, 1.5fr);
+  gap: 12px;
+  min-width: 980px;
+  border-radius: 6px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.cap-row.head {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cap-row span {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.cap-row strong,
+.cap-row small {
+  display: block;
+}
+
+.cap-row small {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+
 dl {
   margin: 0;
 }
