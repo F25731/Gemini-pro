@@ -5,7 +5,7 @@
         <button class="icon-btn" @click="collapsed = !collapsed">{{ collapsed ? ">" : "<" }}</button>
         <div v-if="!collapsed">
           <strong>Banana Wrapper</strong>
-          <span>NewAPI 中转管理</span>
+          <span>NewAPI relay admin</span>
         </div>
       </div>
       <nav>
@@ -19,13 +19,13 @@
     <main>
       <header class="topbar">
         <div>
-          <p>{{ currentNav?.label || "监控板" }}</p>
+          <p>{{ currentNav?.label || "Dashboard" }}</p>
           <h1>{{ currentTitle }}</h1>
         </div>
         <form class="login" @submit.prevent="login">
-          <input v-model="username" placeholder="后台用户名" />
-          <input v-model="password" type="password" placeholder="后台密码" />
-          <button>登录</button>
+          <input v-model="username" placeholder="Admin user" />
+          <input v-model="password" type="password" placeholder="Admin password" />
+          <button>Login</button>
         </form>
       </header>
 
@@ -34,17 +34,17 @@
 
       <section v-if="view === 'dashboard'" class="view">
         <div class="cards">
-          <div class="metric"><span>平均延迟</span><strong>{{ formatMs(totalMetrics.avgLatencyMs) }}</strong></div>
-          <div class="metric"><span>成功率</span><strong>{{ formatRate(totalMetrics.successRate) }}</strong></div>
-          <div class="metric"><span>运行中</span><strong>{{ status?.pool?.active || 0 }}</strong></div>
-          <div class="metric"><span>队列中</span><strong>{{ status?.pool?.queued || 0 }}</strong></div>
+          <div class="metric"><span>Avg latency</span><strong>{{ formatMs(totalMetrics.avgLatencyMs) }}</strong></div>
+          <div class="metric"><span>Success rate</span><strong>{{ formatRate(totalMetrics.successRate) }}</strong></div>
+          <div class="metric"><span>Active</span><strong>{{ status?.pool?.active || 0 }}</strong></div>
+          <div class="metric"><span>Queued</span><strong>{{ status?.pool?.queued || 0 }}</strong></div>
           <div class="metric"><span>Workers</span><strong>{{ status?.pool?.workers || 0 }}</strong></div>
         </div>
         <div class="panel">
-          <h2>分组状态</h2>
+          <h2>Group metrics</h2>
           <div class="table">
-            <div class="row head"><span>分组</span><span>成功率</span><span>平均延迟</span><span>成功/失败</span></div>
-            <div v-if="metricRows.length === 0" class="empty">暂无任务数据，产生请求后会显示延迟和成功率。</div>
+            <div class="row head"><span>Group</span><span>Success rate</span><span>Avg latency</span><span>OK / Failed</span></div>
+            <div v-if="metricRows.length === 0" class="empty">No traffic yet. Metrics will appear after requests.</div>
             <div v-for="row in metricRows" :key="row.key" class="row">
               <span>{{ row.label }}</span>
               <span>{{ formatRate(row.data.successRate) }}</span>
@@ -57,144 +57,123 @@
 
       <section v-if="view === 'config'" class="view grid">
         <div class="panel">
-          <h2>NewAPI 配置</h2>
+          <h2>NewAPI config</h2>
           <dl>
             <dt>Base URL</dt>
             <dd><code>{{ baseUrl }}</code></dd>
             <dt>Wrapper API Key</dt>
             <dd>
-              <span class="secret-state" :class="{ set: config?.wrapperApiKeySet }">
-                <i></i>{{ config?.wrapperApiKeySet ? "已配置" : "未配置 WRAPPER_API_KEY" }}
-              </span>
+              <div v-if="config?.wrapperApiKey" class="key-line">
+                <code>{{ config.wrapperApiKey }}</code>
+                <button type="button" @click="copyText(config.wrapperApiKey)">Copy</button>
+              </div>
+              <span v-else class="secret-state"><i></i>Not configured</span>
             </dd>
-            <dt>模型</dt>
+            <dt>Models</dt>
             <dd>{{ config?.models?.join(", ") }}</dd>
           </dl>
         </div>
         <div class="panel">
-          <h2>上游 GetToken</h2>
+          <h2>Upstream GetToken</h2>
           <dl>
-            <dt>上游地址</dt>
+            <dt>Base URL</dt>
             <dd><code>{{ config?.bananaBaseUrl }}</code></dd>
-            <dt>API Key 状态</dt>
+            <dt>API Key status</dt>
             <dd>
               <span class="secret-state" :class="{ set: config?.bananaApiKeySet }">
-                <i></i>{{ config?.bananaApiKeySet ? `已配置 ${config?.bananaApiKeyHint || ""}` : "未配置" }}
+                <i></i>{{ config?.bananaApiKeySet ? `Configured ${config?.bananaApiKeyHint || ""}` : "Not configured" }}
               </span>
             </dd>
           </dl>
           <form class="inline-form" @submit.prevent="saveBananaKey">
-            <input v-model="bananaApiKey" type="password" placeholder="粘贴上游 API Key" />
-            <button>保存</button>
+            <input v-model="bananaApiKey" type="password" placeholder="Paste upstream API key" />
+            <button>Save</button>
           </form>
         </div>
         <div class="panel wide">
-          <h2>后端参数</h2>
+          <h2>Runtime</h2>
           <div class="cards compact">
             <div class="metric"><span>Workers</span><strong>{{ config?.maxWorkers || 0 }}</strong></div>
-            <div class="metric"><span>队列容量</span><strong>{{ config?.maxQueue || 0 }}</strong></div>
-            <div class="metric"><span>轮询间隔</span><strong>{{ config?.pollIntervalMs || 0 }} ms</strong></div>
-            <div class="metric"><span>请求超时</span><strong>{{ config?.requestTimeoutSec || 0 }} 秒</strong></div>
+            <div class="metric"><span>Queue capacity</span><strong>{{ config?.maxQueue || 0 }}</strong></div>
+            <div class="metric"><span>Poll interval</span><strong>{{ config?.pollIntervalMs || 0 }} ms</strong></div>
+            <div class="metric"><span>Timeout</span><strong>{{ config?.requestTimeoutSec || 0 }} s</strong></div>
           </div>
         </div>
       </section>
 
       <section v-if="view === 'capabilities'" class="view">
         <div class="panel">
-          <h2>模型能力总览</h2>
+          <h2>Model capabilities</h2>
           <div class="capability-groups">
-            <section class="capability-section">
-              <h3>图片模型</h3>
-              <div class="cap-table">
-                <div class="cap-row head">
-                  <span>模型</span><span>支持能力</span><span>参考图</span><span>画质/分辨率</span><span>比例/时长</span><span>说明</span>
-                </div>
-                <div v-if="imageModels.length === 0" class="empty">暂无模型数据。</div>
-                <div v-for="model in imageModels" :key="model.id" class="cap-row">
-                  <span><strong>{{ model.id }}</strong><small>{{ model.name }}</small></span>
-                  <span>{{ model.capabilities?.join(" / ") || "-" }}</span>
-                  <span>{{ refsText(model) }}<small v-if="model.maxFileSizeMb">单图 {{ model.maxFileSizeMb }}MB</small></span>
-                  <span>{{ model.qualityTiers?.join(" / ") || model.resolution }}</span>
-                  <span>
-                    {{ model.aspectRatios?.join(" / ") || "-" }}
-                    <small v-if="model.durationOptions?.length">时长 {{ model.durationOptions.join(" / ") }} 秒</small>
-                  </span>
-                  <span>{{ model.notes?.join("；") || "-" }}</span>
-                </div>
-              </div>
-            </section>
-            <section class="capability-section">
-              <h3>视频模型</h3>
-              <div class="cap-table">
-                <div class="cap-row head">
-                  <span>模型</span><span>支持能力</span><span>参考图</span><span>画质/分辨率</span><span>比例/时长</span><span>说明</span>
-                </div>
-                <div v-if="videoModels.length === 0" class="empty">暂无模型数据。</div>
-                <div v-for="model in videoModels" :key="model.id" class="cap-row">
-                  <span><strong>{{ model.id }}</strong><small>{{ model.name }}</small></span>
-                  <span>{{ model.capabilities?.join(" / ") || "-" }}</span>
-                  <span>{{ refsText(model) }}<small v-if="model.maxFileSizeMb">单图 {{ model.maxFileSizeMb }}MB</small></span>
-                  <span>{{ model.qualityTiers?.join(" / ") || model.resolution }}</span>
-                  <span>
-                    {{ model.aspectRatios?.join(" / ") || "-" }}
-                    <small v-if="model.durationOptions?.length">时长 {{ model.durationOptions.join(" / ") }} 秒</small>
-                  </span>
-                  <span>{{ model.notes?.join("；") || "-" }}</span>
-                </div>
-              </div>
-            </section>
+            <CapabilityTable title="Image models" :models="imageModels" />
+            <CapabilityTable title="Video models" :models="videoModels" />
           </div>
         </div>
       </section>
 
       <section v-if="view === 'images'" class="view">
         <div class="cards">
-          <div class="metric"><span>图片成功率</span><strong>{{ formatRate(imageMetrics.successRate) }}</strong></div>
-          <div class="metric"><span>图片平均延迟</span><strong>{{ formatMs(imageMetrics.avgLatencyMs) }}</strong></div>
-          <div class="metric"><span>成功</span><strong>{{ imageMetrics.success || 0 }}</strong></div>
-          <div class="metric"><span>失败</span><strong>{{ imageMetrics.failed || 0 }}</strong></div>
+          <div class="metric"><span>Image success rate</span><strong>{{ formatRate(imageMetrics.successRate) }}</strong></div>
+          <div class="metric"><span>Image avg latency</span><strong>{{ formatMs(imageMetrics.avgLatencyMs) }}</strong></div>
+          <div class="metric"><span>Success</span><strong>{{ imageMetrics.success || 0 }}</strong></div>
+          <div class="metric"><span>Failed</span><strong>{{ imageMetrics.failed || 0 }}</strong></div>
         </div>
-        <div class="panel">
-          <h2>图片模型</h2>
-          <div v-if="imageModels.length === 0" class="empty">暂无模型数据。</div>
-          <div class="model-grid">
-            <article v-for="model in imageModels" :key="model.id">
-              <strong>{{ model.id }}</strong>
-              <span>{{ model.name }}</span>
-              <code>{{ model.textEndpoint }}</code>
-              <code v-if="model.imageEndpoint">{{ model.imageEndpoint }}</code>
-            </article>
-          </div>
-        </div>
+        <ModelGrid title="Image models" :models="imageModels" />
       </section>
 
       <section v-if="view === 'videos'" class="view">
         <div class="cards">
-          <div class="metric"><span>视频成功率</span><strong>{{ formatRate(videoMetrics.successRate) }}</strong></div>
-          <div class="metric"><span>视频平均延迟</span><strong>{{ formatMs(videoMetrics.avgLatencyMs) }}</strong></div>
-          <div class="metric"><span>成功</span><strong>{{ videoMetrics.success || 0 }}</strong></div>
-          <div class="metric"><span>失败</span><strong>{{ videoMetrics.failed || 0 }}</strong></div>
+          <div class="metric"><span>Video success rate</span><strong>{{ formatRate(videoMetrics.successRate) }}</strong></div>
+          <div class="metric"><span>Video avg latency</span><strong>{{ formatMs(videoMetrics.avgLatencyMs) }}</strong></div>
+          <div class="metric"><span>Success</span><strong>{{ videoMetrics.success || 0 }}</strong></div>
+          <div class="metric"><span>Failed</span><strong>{{ videoMetrics.failed || 0 }}</strong></div>
         </div>
-        <div class="panel">
-          <h2>视频模型</h2>
-          <div v-if="videoModels.length === 0" class="empty">暂无模型数据。</div>
-          <div class="model-grid">
-            <article v-for="model in videoModels" :key="model.id">
-              <strong>{{ model.id }}</strong>
-              <span>{{ model.name }}</span>
-              <code>{{ model.textEndpoint }}</code>
-              <code v-if="model.imageEndpoint">{{ model.imageEndpoint }}</code>
-              <code v-if="model.startEndEndpoint">{{ model.startEndEndpoint }}</code>
-            </article>
-          </div>
-        </div>
+        <ModelGrid title="Video models" :models="videoModels" />
       </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref } from "vue";
+
+const CapabilityTable = defineComponent({
+  props: { title: String, models: { type: Array, default: () => [] } },
+  setup(props) {
+    return () => h("section", { class: "capability-section" }, [
+      h("h3", props.title),
+      h("div", { class: "cap-table" }, [
+        h("div", { class: "cap-row head" }, ["Model", "Features", "References", "Quality", "Ratio / duration", "Notes"].map((text) => h("span", text))),
+        props.models.length === 0 ? h("div", { class: "empty" }, "No model data.") : null,
+        ...props.models.map((model) => h("div", { class: "cap-row", key: model.id }, [
+          h("span", [h("strong", model.id), h("small", model.name)]),
+          h("span", model.capabilities?.join(" / ") || "-"),
+          h("span", [refsText(model), model.maxFileSizeMb ? h("small", `per image ${model.maxFileSizeMb}MB`) : null]),
+          h("span", model.qualityTiers?.join(" / ") || model.resolution),
+          h("span", [model.aspectRatios?.join(" / ") || "-", model.durationOptions?.length ? h("small", `duration ${model.durationOptions.join(" / ")}s`) : null]),
+          h("span", model.notes?.join("; ") || "-"),
+        ])),
+      ]),
+    ]);
+  },
+});
+
+const ModelGrid = defineComponent({
+  props: { title: String, models: { type: Array, default: () => [] } },
+  setup(props) {
+    return () => h("div", { class: "panel" }, [
+      h("h2", props.title),
+      props.models.length === 0 ? h("div", { class: "empty" }, "No model data.") : null,
+      h("div", { class: "model-grid" }, props.models.map((model) => h("article", { key: model.id }, [
+        h("strong", model.id),
+        h("span", model.name),
+        h("code", model.textEndpoint),
+        model.imageEndpoint ? h("code", model.imageEndpoint) : null,
+        model.startEndEndpoint ? h("code", model.startEndEndpoint) : null,
+      ]))),
+    ]);
+  },
+});
 
 const collapsed = ref(false);
 const view = ref("dashboard");
@@ -208,21 +187,21 @@ const success = ref("");
 let timer = null;
 
 const navItems = [
-  { key: "dashboard", label: "监控板", icon: "M" },
-  { key: "config", label: "API 配置", icon: "A" },
-  { key: "capabilities", label: "模型能力", icon: "C" },
-  { key: "images", label: "图片监控", icon: "I" },
-  { key: "videos", label: "视频监控", icon: "V" },
+  { key: "dashboard", label: "Dashboard", icon: "M" },
+  { key: "config", label: "API config", icon: "A" },
+  { key: "capabilities", label: "Capabilities", icon: "C" },
+  { key: "images", label: "Images", icon: "I" },
+  { key: "videos", label: "Videos", icon: "V" },
 ];
 
 const currentNav = computed(() => navItems.find((item) => item.key === view.value));
 const currentTitle = computed(() => ({
-  dashboard: "实时运行概览",
-  config: "接入与上游配置",
-  capabilities: "模型能力说明",
-  images: "图片任务监控",
-  videos: "视频任务监控",
-}[view.value] || "监控板"));
+  dashboard: "Runtime overview",
+  config: "NewAPI and upstream config",
+  capabilities: "Model capability matrix",
+  images: "Image monitoring",
+  videos: "Video monitoring",
+}[view.value] || "Dashboard"));
 const baseUrl = computed(() => config.value?.publicBaseUrl || `${location.origin}/v1`);
 const modelSpecs = computed(() => config.value?.modelSpecs || []);
 const imageModels = computed(() => modelSpecs.value.filter((item) => item.media === "image"));
@@ -235,20 +214,10 @@ const totalMetrics = computed(() => {
   const total = Number(image.total || 0) + Number(video.total || 0);
   const ok = Number(image.success || 0) + Number(video.success || 0);
   const latencyTotal = Number(image.avgLatencyMs || 0) * Number(image.total || 0) + Number(video.avgLatencyMs || 0) * Number(video.total || 0);
-  return {
-    successRate: total ? ok / total : 0,
-    avgLatencyMs: total ? Math.round(latencyTotal / total) : 0,
-  };
+  return { successRate: total ? ok / total : 0, avgLatencyMs: total ? Math.round(latencyTotal / total) : 0 };
 });
 const metricRows = computed(() => {
-  const labels = {
-    image: "图片总览",
-    video: "视频总览",
-    "banana-pro": "Banana Pro",
-    banana2: "Banana2",
-    "veo31-pro": "Veo3.1 Pro",
-    "veo31-fast": "Veo3.1 Fast",
-  };
+  const labels = { image: "Images", video: "Videos", "banana-pro": "Banana Pro", banana2: "Banana2", "veo31-pro": "Veo3.1 Pro", "veo31-fast": "Veo3.1 Fast" };
   return Object.entries(status.value?.metrics || {}).map(([key, data]) => ({ key, label: labels[key] || key, data }));
 });
 
@@ -262,11 +231,11 @@ async function login() {
     });
     await readJson(response);
     error.value = "";
-    success.value = "登录成功";
+    success.value = "Logged in";
     await refresh();
   } catch (err) {
     success.value = "";
-    error.value = err.message || "登录失败";
+    error.value = err.message || "Login failed";
   }
 }
 
@@ -281,11 +250,11 @@ async function saveBananaKey() {
     await readJson(response);
     bananaApiKey.value = "";
     error.value = "";
-    success.value = "上游 API Key 已保存";
+    success.value = "Upstream API key saved";
     await refresh();
   } catch (err) {
     success.value = "";
-    error.value = err.message || "保存失败";
+    error.value = err.message || "Save failed";
   }
 }
 
@@ -297,10 +266,24 @@ async function refresh() {
     ]);
     status.value = nextStatus;
     config.value = nextConfig;
-    if (error.value === "invalid admin token") error.value = "";
   } catch (err) {
-    error.value = err.message || "加载失败";
+    error.value = err.message || "Load failed";
   }
+}
+
+async function copyText(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    success.value = "Copied";
+  } catch {
+    success.value = "Copy failed, select the key manually";
+  }
+}
+
+function refsText(model) {
+  if (!model.maxImageInputs) return "0";
+  if (model.minImageInputs && model.minImageInputs !== model.maxImageInputs) return `${model.minImageInputs}-${model.maxImageInputs}`;
+  return `up to ${model.maxImageInputs}`;
 }
 
 function formatRate(value) {
@@ -311,14 +294,6 @@ function formatMs(value) {
   const ms = Number(value || 0);
   if (ms >= 1000) return `${Math.round(ms / 100) / 10}s`;
   return `${ms}ms`;
-}
-
-function refsText(model) {
-  if (!model.maxImageInputs) return "0 张";
-  if (model.minImageInputs && model.minImageInputs !== model.maxImageInputs) {
-    return `${model.minImageInputs}-${model.maxImageInputs} 张`;
-  }
-  return `最多 ${model.maxImageInputs} 张`;
 }
 
 async function readJson(response) {
