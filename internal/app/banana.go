@@ -20,12 +20,15 @@ type BananaClient struct {
 }
 
 type BananaSubmitRequest struct {
-	Prompt       string   `json:"prompt"`
-	ImageURLs    []string `json:"imageUrls,omitempty"`
-	AspectRatio  string   `json:"aspectRatio,omitempty"`
-	Resolution   string   `json:"resolution"`
-	WebhookURL   string   `json:"webhookUrl,omitempty"`
-	ClientTaskID string   `json:"clientTaskId,omitempty"`
+	Prompt        string   `json:"prompt"`
+	ImageURLs     []string `json:"imageUrls,omitempty"`
+	FirstFrameURL string `json:"firstFrameUrl,omitempty"`
+	LastFrameURL  string `json:"lastFrameUrl,omitempty"`
+	AspectRatio   string `json:"aspectRatio,omitempty"`
+	Resolution    string `json:"resolution"`
+	Duration      string `json:"duration,omitempty"`
+	WebhookURL    string `json:"webhookUrl,omitempty"`
+	ClientTaskID  string `json:"clientTaskId,omitempty"`
 }
 
 type BananaTask struct {
@@ -43,6 +46,8 @@ type BananaResult struct {
 	URL         string `json:"url"`
 	ImageURL    string `json:"imageUrl"`
 	ImageURLAlt string `json:"image_url"`
+	VideoURL    string `json:"videoUrl"`
+	VideoURLAlt string `json:"video_url"`
 	DownloadURL string `json:"download_url"`
 	OutputType  string `json:"outputType"`
 	Text        string `json:"text"`
@@ -58,6 +63,10 @@ func (c *BananaClient) SubmitTextToImage(ctx context.Context, req BananaSubmitRe
 
 func (c *BananaClient) SubmitImageToImage(ctx context.Context, req BananaSubmitRequest) (BananaTask, error) {
 	return c.postTask(ctx, "/v1/banana_pro/image-to-image", req)
+}
+
+func (c *BananaClient) Submit(ctx context.Context, path string, req BananaSubmitRequest) (BananaTask, error) {
+	return c.postTask(ctx, path, req)
 }
 
 func (c *BananaClient) Wait(ctx context.Context, taskID string) (BananaTask, error) {

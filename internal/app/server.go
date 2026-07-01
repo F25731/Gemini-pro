@@ -18,12 +18,13 @@ type Server struct {
 	runtime *RuntimeStore
 	client  *BananaClient
 	pool    *WorkerPool
+	metrics *Metrics
 }
 
 func NewServer(cfg Config) *Server {
 	runtime := NewRuntimeStore(cfg.RuntimeConfigPath, RuntimeConfig{BananaAPIKey: cfg.BananaAPIKey})
 	client := NewBananaClient(cfg, runtime)
-	return &Server{cfg: cfg, runtime: runtime, client: client, pool: NewWorkerPool(cfg.MaxWorkers, cfg.MaxQueue)}
+	return &Server{cfg: cfg, runtime: runtime, client: client, pool: NewWorkerPool(cfg.MaxWorkers, cfg.MaxQueue), metrics: NewMetrics()}
 }
 
 func (s *Server) Router() http.Handler {
@@ -37,11 +38,16 @@ func (s *Server) Router() http.Handler {
 	router.POST("/v1/completions", s.openAIAuth(), s.completions)
 	router.POST("/v1/images/generations", s.openAIAuth(), s.imageGeneration)
 	router.POST("/v1/images/edits", s.openAIAuth(), s.imageEdit)
+	router.POST("/v1/videos/generations", s.openAIAuth(), s.videoGeneration)
+	router.POST("/v1/videos/edits", s.openAIAuth(), s.videoGeneration)
+	router.POST("/v1/video/generations", s.openAIAuth(), s.videoGeneration)
+	router.POST("/v1/video/edits", s.openAIAuth(), s.videoGeneration)
 	router.POST("/api/admin/login", s.adminLogin)
 
 	admin := router.Group("/api/admin", s.adminAuth())
 	admin.GET("/status", s.adminStatus)
 	admin.GET("/config", s.adminConfig)
+	admin.GET("/models", s.adminModels)
 	admin.POST("/config", s.adminSaveConfig)
 
 	s.mountAdmin(router)
@@ -56,7 +62,7 @@ func (s *Server) mountAdmin(router *gin.Engine) {
 	assets, err := fs.Sub(webFS, "web/dist/assets")
 	if err == nil {
 		router.StaticFS("/admin/assets", http.FS(assets))
-	router.StaticFS("/assets", http.FS(assets))
+		router.StaticFS("/assets", http.FS(assets))
 	}
 	router.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/admin") })
 	adminPage := func(c *gin.Context) {
@@ -83,17 +89,25 @@ func (s *Server) health(c *gin.Context) {
 }
 
 func (s *Server) models(c *gin.Context) {
-	data := make([]gin.H, 0, len(s.cfg.Models()))
-	for _, model := range s.cfg.Models() {
-		data = append(data, gin.H{"id": model, "object": "model", "created": 0, "owned_by": "banana-pro-wrapper"})
+	specs := publicModelSpecs()
+	data := make([]gin.H, 0, len(specs))
+	for _, spec := range specs {
+		endpoints := []string{"openai"}
+		if spec.Media == MediaImage {
+			endpoints = append(endpoints, "images")
+		} else {
+			endpoints = append(endpoints, "videos")
+		}
+		data = append(data, gin.H{"id": spec.ID, "object": "model", "created": 0, "owned_by": "banana-wrapper", "supported_endpoint_types": endpoints})
 	}
 	c.JSON(http.StatusOK, gin.H{"object": "list", "data": data})
 }
 
 func (s *Server) adminStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"pool":   s.pool.Stats(),
-		"models": s.cfg.Models(),
+		"pool":    s.pool.Stats(),
+		"models":  s.cfg.Models(),
+		"metrics": s.metrics.Snapshot(),
 	})
 }
 
@@ -113,7 +127,12 @@ func (s *Server) adminConfig(c *gin.Context) {
 		"requestTimeoutSec": int(s.cfg.RequestTimeout.Seconds()),
 		"returnB64JSON":     s.cfg.ReturnB64JSON,
 		"models":            s.cfg.Models(),
+		"modelSpecs":        publicModelSpecs(),
 	})
+}
+
+func (s *Server) adminModels(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"models": publicModelSpecs()})
 }
 
 func (s *Server) adminSaveConfig(c *gin.Context) {

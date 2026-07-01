@@ -38,8 +38,8 @@ func LoadConfig() Config {
 		BananaAPIKey:      env("BANANA_API_KEY", ""),
 		RuntimeConfigPath: env("RUNTIME_CONFIG_PATH", "data/config.json"),
 		ModelPrefix:       env("MODEL_PREFIX", "banana-pro"),
-		MaxWorkers:        envInt("MAX_WORKERS", 512),
-		MaxQueue:          envInt("MAX_QUEUE", 20000),
+		MaxWorkers:        envInt("MAX_WORKERS", 2000),
+		MaxQueue:          envInt("MAX_QUEUE", 50000),
 		PollInterval:      time.Duration(envInt("BANANA_POLL_INTERVAL_MS", 2500)) * time.Millisecond,
 		RequestTimeout:    time.Duration(envInt("REQUEST_TIMEOUT_SECONDS", 600)) * time.Second,
 		BananaHTTPTimeout: time.Duration(envInt("BANANA_HTTP_TIMEOUT_SECONDS", 60)) * time.Second,
@@ -48,7 +48,7 @@ func LoadConfig() Config {
 }
 
 func (cfg Config) Models() []string {
-	return []string{cfg.ModelPrefix + "-1k", cfg.ModelPrefix + "-2k", cfg.ModelPrefix + "-4k"}
+	return modelIDs()
 }
 
 func env(key string, fallback string) string {

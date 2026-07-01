@@ -24,10 +24,15 @@ type ImageRequest struct {
 	Prompt         string   `json:"prompt"`
 	Size           string   `json:"size"`
 	Quality        string   `json:"quality"`
+	AspectRatio    string   `json:"aspectRatio"`
+	Resolution     string   `json:"resolution"`
+	Duration       string   `json:"duration"`
 	N              int      `json:"n"`
 	ResponseFormat string   `json:"response_format"`
 	ImageURL       string   `json:"image_url"`
 	ImageURLs      []string `json:"imageUrls"`
+	FirstFrameURL  string   `json:"firstFrameUrl"`
+	LastFrameURL   string   `json:"lastFrameUrl"`
 	WebhookURL     string   `json:"webhookUrl"`
 	ClientTaskID   string   `json:"clientTaskId"`
 }
@@ -44,7 +49,7 @@ type completionProbeRequest struct {
 func (s *Server) chatCompletions(c *gin.Context) {
 	var req completionProbeRequest
 	_ = c.ShouldBindJSON(&req)
-	if _, err := s.resolutionFromModel(req.Model); err != nil {
+	if _, err := modelSpecByID(req.Model); err != nil {
 		openAIError(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -68,7 +73,7 @@ func (s *Server) chatCompletions(c *gin.Context) {
 func (s *Server) completions(c *gin.Context) {
 	var req completionProbeRequest
 	_ = c.ShouldBindJSON(&req)
-	if _, err := s.resolutionFromModel(req.Model); err != nil {
+	if _, err := modelSpecByID(req.Model); err != nil {
 		openAIError(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -113,9 +118,13 @@ func (s *Server) imageEdit(c *gin.Context) {
 }
 
 func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []string, isEdit bool) {
-	resolution, err := s.resolutionFromModel(req.Model)
+	spec, err := modelSpecByID(req.Model)
 	if err != nil {
 		openAIError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if spec.Media != MediaImage {
+		openAIError(c, http.StatusBadRequest, fmt.Sprintf("model %q is a video model", req.Model))
 		return
 	}
 	if strings.TrimSpace(req.Prompt) == "" {
@@ -133,6 +142,13 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 	ctx, cancel := context.WithTimeout(c.Request.Context(), s.cfg.RequestTimeout)
 	defer cancel()
 
+	started := time.Now()
+	ok := false
+	defer func() {
+		s.metrics.Record("image", ok, time.Since(started))
+		s.metrics.Record(spec.Family, ok, time.Since(started))
+	}()
+
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	errCh := make(chan error, count)
@@ -143,7 +159,7 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		go func() {
 			defer wg.Done()
 			err := s.pool.Run(ctx, func(ctx context.Context) error {
-				items, err := s.runOneImageTask(ctx, req, imageURLs, resolution, isEdit, i)
+				items, err := s.runOneImageTask(ctx, req, imageURLs, spec, isEdit, i)
 				if err != nil {
 					return err
 				}
@@ -167,10 +183,11 @@ func (s *Server) runImageTask(c *gin.Context, req ImageRequest, imageURLs []stri
 		openAIError(c, status, err.Error())
 		return
 	}
+	ok = true
 	c.JSON(http.StatusOK, gin.H{"created": time.Now().Unix(), "data": outputs})
 }
 
-func (s *Server) runOneImageTask(ctx context.Context, req ImageRequest, imageURLs []string, resolution string, isEdit bool, index int) ([]ImageOutput, error) {
+func (s *Server) runOneImageTask(ctx context.Context, req ImageRequest, imageURLs []string, spec ModelSpec, isEdit bool, index int) ([]ImageOutput, error) {
 	clientTaskID := req.ClientTaskID
 	if clientTaskID == "" {
 		clientTaskID = fmt.Sprintf("banana-%d-%d", time.Now().UnixNano(), index)
@@ -178,8 +195,8 @@ func (s *Server) runOneImageTask(ctx context.Context, req ImageRequest, imageURL
 	taskReq := BananaSubmitRequest{
 		Prompt:       req.Prompt,
 		ImageURLs:    imageURLs,
-		AspectRatio:  normalizeAspectRatio(req.Size),
-		Resolution:   resolution,
+		AspectRatio:  normalizeImageAspectRatio(firstNonEmpty(req.AspectRatio, req.Size)),
+		Resolution:   spec.Resolution,
 		WebhookURL:   req.WebhookURL,
 		ClientTaskID: clientTaskID,
 	}
@@ -189,9 +206,9 @@ func (s *Server) runOneImageTask(ctx context.Context, req ImageRequest, imageURL
 		if len(taskReq.ImageURLs) == 0 {
 			return nil, errors.New("image is required for image edit")
 		}
-		task, err = s.client.SubmitImageToImage(ctx, taskReq)
+		task, err = s.client.Submit(ctx, spec.ImageEndpoint, taskReq)
 	} else {
-		task, err = s.client.SubmitTextToImage(ctx, taskReq)
+		task, err = s.client.Submit(ctx, spec.TextEndpoint, taskReq)
 	}
 	if err != nil {
 		return nil, err
@@ -235,6 +252,11 @@ func (s *Server) parseEditRequest(c *gin.Context) (ImageRequest, []string, error
 		ResponseFormat: formValue(form, "response_format"),
 		WebhookURL:     formValue(form, "webhookUrl"),
 		ClientTaskID:   formValue(form, "clientTaskId"),
+		AspectRatio:    formValue(form, "aspectRatio"),
+		Resolution:     formValue(form, "resolution"),
+		Duration:       formValue(form, "duration"),
+		FirstFrameURL:  formValue(form, "firstFrameUrl"),
+		LastFrameURL:   formValue(form, "lastFrameUrl"),
 	}
 	if n, _ := strconv.Atoi(formValue(form, "n")); n > 0 {
 		req.N = n
@@ -264,16 +286,6 @@ func (s *Server) parseEditRequest(c *gin.Context) (ImageRequest, []string, error
 	return req, urls, nil
 }
 
-func (s *Server) resolutionFromModel(model string) (string, error) {
-	value := strings.ToLower(strings.TrimSpace(model))
-	for _, resolution := range []string{"1k", "2k", "4k"} {
-		if value == strings.ToLower(s.cfg.ModelPrefix+"-"+resolution) || value == "banana-pro-"+resolution {
-			return resolution, nil
-		}
-	}
-	return "", fmt.Errorf("unsupported model %q", model)
-}
-
 func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult, format string) ([]ImageOutput, error) {
 	outputs := make([]ImageOutput, 0, len(results))
 	wantB64 := strings.EqualFold(format, "b64_json") || s.cfg.ReturnB64JSON
@@ -300,7 +312,7 @@ func (s *Server) outputsFromResults(ctx context.Context, results []BananaResult,
 }
 
 func (result BananaResult) ImageURLValue() string {
-	for _, value := range []string{result.URL, result.ImageURL, result.ImageURLAlt, result.DownloadURL} {
+	for _, value := range []string{result.URL, result.ImageURL, result.ImageURLAlt, result.VideoURL, result.VideoURLAlt, result.DownloadURL} {
 		if strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}
@@ -308,7 +320,7 @@ func (result BananaResult) ImageURLValue() string {
 	return ""
 }
 
-func normalizeAspectRatio(size string) string {
+func normalizeImageAspectRatio(size string) string {
 	value := strings.TrimSpace(size)
 	if value == "" || strings.EqualFold(value, "auto") {
 		return ""
@@ -342,6 +354,30 @@ func normalizeAspectRatio(size string) string {
 		}
 	}
 	return best.label
+}
+
+func normalizeVideoAspectRatio(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "9:16" {
+		return value
+	}
+	return "16:9"
+}
+
+func normalizeVideoDuration(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return "8"
+	}
+	return "8"
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }
 
 func downloadB64(ctx context.Context, client *http.Client, url string) (string, error) {
